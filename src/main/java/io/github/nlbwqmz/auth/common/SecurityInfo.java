@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthInfo {
+public class SecurityInfo {
 
   private Set<String> patterns;
   private Set<String> methods;

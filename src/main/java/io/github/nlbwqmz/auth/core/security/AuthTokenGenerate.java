@@ -5,7 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTValidator;
 import cn.hutool.jwt.signers.JWTSignerUtil;
-import io.github.nlbwqmz.auth.common.SubjectManager;
+import io.github.nlbwqmz.auth.common.AuthThreadLocal;
 import io.github.nlbwqmz.auth.configuration.AuthAutoConfiguration;
 import io.github.nlbwqmz.auth.configuration.TokenConfiguration;
 import io.github.nlbwqmz.auth.exception.security.CertificateException;
@@ -51,8 +51,9 @@ public class AuthTokenGenerate {
   public void decode(String token) {
     JWT jwt = JWT.of(token).setKey(tokenConfiguration.getPassword().getBytes(StandardCharsets.UTF_8));
     JSONObject payloads = jwt.getPayloads();
-    SubjectManager.setSubject(payloads.getStr(CLAIM_SUBJECT));
-    SubjectManager.setExpire(payloads.getLong(CLAIM_EXPIRE, 0L));
+    AuthThreadLocal.setExpireDate(payloads.getDate("exp"));
+    AuthThreadLocal.setSubject(payloads.getStr(CLAIM_SUBJECT));
+    AuthThreadLocal.setExpire(payloads.getLong(CLAIM_EXPIRE, 0L));
   }
 
   public void verify(String token) {

@@ -6,6 +6,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
+ * 认证
+ *
  * @author 魏杰
  * @since 0.0.1
  */

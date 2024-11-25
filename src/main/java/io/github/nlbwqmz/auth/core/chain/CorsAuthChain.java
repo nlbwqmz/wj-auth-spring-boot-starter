@@ -1,7 +1,7 @@
 package io.github.nlbwqmz.auth.core.chain;
 
 import cn.hutool.core.util.ArrayUtil;
-import io.github.nlbwqmz.auth.common.SubjectManager;
+import io.github.nlbwqmz.auth.common.AuthThreadLocal;
 import io.github.nlbwqmz.auth.configuration.AuthAutoConfiguration;
 import io.github.nlbwqmz.auth.configuration.CorsConfiguration;
 import javax.servlet.http.HttpServletResponse;
@@ -25,7 +25,7 @@ public class CorsAuthChain implements AuthChain {
 
   @Override
   public void doFilter(ChainManager chain) {
-    HttpServletResponse response = SubjectManager.getResponse();
+    HttpServletResponse response = AuthThreadLocal.getResponse();
     response.setHeader(
         HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS,
         corsConfiguration.getAccessControlAllowCredentials().toString()

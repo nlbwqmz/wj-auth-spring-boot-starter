@@ -2,9 +2,9 @@ package io.github.nlbwqmz.auth.core.chain;
 
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.ImmutableSet;
-import io.github.nlbwqmz.auth.common.AuthInfo;
+import io.github.nlbwqmz.auth.common.AuthThreadLocal;
 import io.github.nlbwqmz.auth.common.FilterRange;
-import io.github.nlbwqmz.auth.common.SubjectManager;
+import io.github.nlbwqmz.auth.common.SecurityInfo;
 import io.github.nlbwqmz.auth.configuration.AuthAutoConfiguration;
 import io.github.nlbwqmz.auth.configuration.XssConfiguration;
 import io.github.nlbwqmz.auth.core.xss.XssRequestWrapper;
@@ -26,8 +26,8 @@ import org.springframework.stereotype.Component;
 public class XssAuthChain implements AuthChain {
 
   private final XssConfiguration xssConfiguration;
-  private ImmutableSet<AuthInfo> xssIgnored;
-  private ImmutableSet<AuthInfo> xssOnly;
+  private ImmutableSet<SecurityInfo> xssIgnored;
+  private ImmutableSet<SecurityInfo> xssOnly;
   @Value("${server.servlet.context-path:}")
   private String contextPath;
 
@@ -35,16 +35,16 @@ public class XssAuthChain implements AuthChain {
     this.xssConfiguration = authAutoConfiguration.getXss();
   }
 
-  public void setXss(Set<AuthInfo> xssSet, Set<AuthInfo> xssIgnoredSet) {
+  public void setXss(Set<SecurityInfo> xssSet, Set<SecurityInfo> xssIgnoredSet) {
     Set<String> only = xssConfiguration.getOnly();
     Set<String> ignored = xssConfiguration.getIgnored();
     if (CollUtil.isNotEmpty(only)) {
       xssSet.add(
-          AuthInfo.builder().patterns(AuthCommonUtil.addUrlPrefix(only, contextPath))
+          SecurityInfo.builder().patterns(AuthCommonUtil.addUrlPrefix(only, contextPath))
               .build());
     }
     if (CollUtil.isNotEmpty(ignored)) {
-      xssIgnoredSet.add(AuthInfo.builder()
+      xssIgnoredSet.add(SecurityInfo.builder()
           .patterns(AuthCommonUtil.addUrlPrefix(ignored, contextPath)).build());
     }
     xssOnly = ImmutableSet.copyOf(xssSet);
@@ -53,9 +53,9 @@ public class XssAuthChain implements AuthChain {
 
   @Override
   public void doFilter(ChainManager chain) {
-    HttpServletRequest request = SubjectManager.getRequest();
+    HttpServletRequest request = AuthThreadLocal.getRequest();
     if (isDoXss(request)) {
-      SubjectManager.setRequest(new XssRequestWrapper(request, xssConfiguration.isQueryEnable(),
+      AuthThreadLocal.setRequest(new XssRequestWrapper(request, xssConfiguration.isQueryEnable(),
           xssConfiguration.isBodyEnable()));
     }
     chain.doAuth();

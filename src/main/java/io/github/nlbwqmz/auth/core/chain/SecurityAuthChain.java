@@ -1,16 +1,18 @@
 package io.github.nlbwqmz.auth.core.chain;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ArrayUtil;
-import io.github.nlbwqmz.auth.common.AuthInfo;
-import io.github.nlbwqmz.auth.common.SubjectManager;
+import io.github.nlbwqmz.auth.common.AuthThreadLocal;
+import io.github.nlbwqmz.auth.common.SecurityInfo;
 import io.github.nlbwqmz.auth.configuration.AuthAutoConfiguration;
 import io.github.nlbwqmz.auth.configuration.SecurityConfiguration;
-import io.github.nlbwqmz.auth.core.AuthLogin;
+import io.github.nlbwqmz.auth.core.AuthManager;
 import io.github.nlbwqmz.auth.core.security.AuthTokenGenerate;
 import io.github.nlbwqmz.auth.core.security.SecurityRealm;
-import io.github.nlbwqmz.auth.core.security.configuration.AuthHandlerEntity;
 import io.github.nlbwqmz.auth.core.security.configuration.Logical;
+import io.github.nlbwqmz.auth.core.security.configuration.SecurityHandler;
 import io.github.nlbwqmz.auth.core.security.handler.AnonymizeInterceptorHandler;
 import io.github.nlbwqmz.auth.core.security.handler.AuthenticateInterceptorHandler;
 import io.github.nlbwqmz.auth.core.security.handler.AuthorizeInterceptorHandler;
@@ -21,10 +23,14 @@ import io.github.nlbwqmz.auth.utils.AuthCommonUtil;
 import io.github.nlbwqmz.auth.utils.MatchUtils;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -40,78 +46,83 @@ public class SecurityAuthChain implements AuthChain {
   private final SecurityConfiguration securityConfiguration;
   private final AuthTokenGenerate authTokenGenerate;
   private final SecurityRealm securityRealm;
-  private final AuthLogin authLogin;
-  private final List<AuthHandlerEntity> handlers = new ArrayList<>();
+  private final List<SecurityHandler> handlers = new ArrayList<>();
   @Value("${server.servlet.context-path:}")
   private String contextPath;
 
   public SecurityAuthChain(AuthAutoConfiguration authAutoConfiguration,
       AuthTokenGenerate authTokenGenerate,
-      SecurityRealm securityRealm,
-      AuthLogin authLogin) {
+      SecurityRealm securityRealm) {
     this.securityConfiguration = authAutoConfiguration.getSecurity();
     this.authTokenGenerate = authTokenGenerate;
     this.securityRealm = securityRealm;
-    this.authLogin = authLogin;
   }
 
   @Override
   public void doFilter(ChainManager chain) {
-    HttpServletRequest request = SubjectManager.getRequest();
-    HttpServletResponse response = SubjectManager.getResponse();
-    HandlerHelper handlerHelper = getAuthHandler(request);
-    if (handlerHelper != null) {
-      InterceptorHandler handler = handlerHelper.getHandler();
-      String[] auth = handlerHelper.getAuth();
+    HttpServletRequest request = AuthThreadLocal.getRequest();
+    HttpServletResponse response = AuthThreadLocal.getResponse();
+    HandlerInfo handlerInfo = getAuthHandler(request);
+    if (handlerInfo != null) {
+      InterceptorHandler handler = handlerInfo.getHandler();
+      String[] auth = handlerInfo.getAuth();
       String authenticate = handler.authenticate(request, response, securityConfiguration.getHeader());
+      // 验证token
       if (handler.isVerifyToken() || handler.isRefreshToken()) {
         authTokenGenerate.verify(authenticate);
-      }
-      if (handler.isRefreshToken()) {
         authTokenGenerate.decode(authenticate);
-        String subject = SubjectManager.getSubject();
-        long expire = SubjectManager.getExpire();
-        authLogin.doLogin(subject, expire);
       }
-      if (handler.isAuthorize() && !handler
-          .authorize(request, response, auth, handlerHelper.getLogical(),
-              securityRealm.doAuthorization())) {
+      // 刷新token
+      if (handler.isRefreshToken() && securityConfiguration.getToken().getRefresh()) {
+        Date expireDate = AuthThreadLocal.getExpireDate();
+        if (Objects.nonNull(expireDate)) {
+          Long residualDuration = securityConfiguration.getToken().getResidualDuration();
+          if (residualDuration <= 0
+              || DateUtil.between(new Date(), expireDate, DateUnit.MS, false) < residualDuration) {
+            String subject = AuthThreadLocal.getSubject();
+            long expire = AuthThreadLocal.getExpire();
+            AuthManager.login(subject, expire);
+          }
+        }
+      }
+      if (handler.isAuthorize() && !handler.authorize(request, response, auth, handlerInfo.getLogical(),
+          securityRealm.userPermission(AuthThreadLocal.getSubject()))) {
         throw new PermissionNotFoundException(
             String.format("%s permission required, logical is %s.", ArrayUtil.join(auth, ","),
-                handlerHelper.getLogical().name()));
+                handlerInfo.getLogical().name()));
       }
     }
     chain.doAuth();
   }
 
-  private HandlerHelper getAuthHandler(HttpServletRequest request) {
+  private HandlerInfo getAuthHandler(HttpServletRequest request) {
     String uri = request.getRequestURI();
     String method = request.getMethod();
-    for (AuthHandlerEntity authHandlerEntity : handlers) {
-      Set<AuthInfo> authInfos = authHandlerEntity.getAuthHelpers();
-      for (AuthInfo authInfo : authInfos) {
-        if (MatchUtils.matcher(authInfo, uri, method)) {
-          return new HandlerHelper(authInfo.getAuth(), authInfo.getLogical(),
-              authHandlerEntity.getHandler());
+    for (SecurityHandler securityHandler : handlers) {
+      Set<SecurityInfo> securityInfos = securityHandler.getSecurityInfoSet();
+      for (SecurityInfo securityInfo : securityInfos) {
+        if (MatchUtils.matcher(securityInfo, uri, method)) {
+          return new HandlerInfo(securityInfo.getAuth(), securityInfo.getLogical(),
+              securityHandler.getHandler());
         }
       }
     }
     if (securityConfiguration.isStrict()) {
-      return new HandlerHelper(new AuthenticateInterceptorHandler());
+      return new HandlerInfo(new AuthenticateInterceptorHandler());
     } else {
       return null;
     }
   }
 
-  public void setAuth(Set<AuthInfo> authSet) {
-    Set<AuthInfo> authInfoSet = securityRealm.addAuthPatterns();
-    if (CollUtil.isNotEmpty(authInfoSet)) {
-      for (AuthInfo authInfo : authInfoSet) {
-        Set<String> patterns = authInfo.getPatterns();
-        String[] auth = authInfo.getAuth();
+  public void setAuthorize(Set<SecurityInfo> authSet) {
+    Set<SecurityInfo> securityInfoSet = securityRealm.authorize();
+    if (CollUtil.isNotEmpty(securityInfoSet)) {
+      for (SecurityInfo securityInfo : securityInfoSet) {
+        Set<String> patterns = securityInfo.getPatterns();
+        String[] auth = securityInfo.getAuth();
         if (AuthCommonUtil.isAllNotBlank(patterns) && AuthCommonUtil.isAllNotBlank(auth)) {
-          authInfo.setPatterns(AuthCommonUtil.addUrlPrefix(patterns, contextPath));
-          authSet.add(authInfo);
+          securityInfo.setPatterns(AuthCommonUtil.addUrlPrefix(patterns, contextPath));
+          authSet.add(securityInfo);
         } else {
           String clazz = securityRealm.getClass().toString();
           clazz = clazz.substring(6, clazz.indexOf("$$"));
@@ -121,23 +132,23 @@ public class SecurityAuthChain implements AuthChain {
         }
       }
     }
-    addHandler(new AuthHandlerEntity(authSet, new AuthorizeInterceptorHandler(), 0));
+    addSecurityHandler(new SecurityHandler(authSet, new AuthorizeInterceptorHandler(), 0));
   }
 
-  public void setAnon(Set<AuthInfo> anonSet) {
+  public void setAnonymous(Set<SecurityInfo> anonSet) {
     if (CollUtil.isNotEmpty(securityConfiguration.getAnon())) {
-      anonSet.add(AuthInfo.builder()
+      anonSet.add(SecurityInfo.builder()
           .patterns(AuthCommonUtil.addUrlPrefix(securityConfiguration.getAnon(), contextPath))
           .build());
     }
-    Set<AuthInfo> anonAuthInfoSet = securityRealm.addAnonPatterns();
-    if (CollUtil.isNotEmpty(anonAuthInfoSet)) {
-      for (AuthInfo authInfo : anonAuthInfoSet) {
-        if (authInfo != null) {
-          Set<String> patterns = authInfo.getPatterns();
+    Set<SecurityInfo> anonSecurityInfoSet = securityRealm.anonymous();
+    if (CollUtil.isNotEmpty(anonSecurityInfoSet)) {
+      for (SecurityInfo securityInfo : anonSecurityInfoSet) {
+        if (securityInfo != null) {
+          Set<String> patterns = securityInfo.getPatterns();
           if (CollUtil.isNotEmpty(patterns)) {
-            authInfo.setPatterns(AuthCommonUtil.addUrlPrefix(patterns, contextPath));
-            anonSet.add(authInfo);
+            securityInfo.setPatterns(AuthCommonUtil.addUrlPrefix(patterns, contextPath));
+            anonSet.add(securityInfo);
           } else {
             String clazz = securityRealm.getClass().toString();
             clazz = clazz.substring(6, clazz.indexOf("$$"));
@@ -147,64 +158,43 @@ public class SecurityAuthChain implements AuthChain {
         }
       }
     }
-    addHandler(new AuthHandlerEntity(anonSet, new AnonymizeInterceptorHandler(), 100));
+    addSecurityHandler(new SecurityHandler(anonSet, new AnonymizeInterceptorHandler(), 100));
   }
 
-  public void setAuthc(Set<AuthInfo> authcSet) {
-    addHandler(new AuthHandlerEntity(authcSet, new AuthenticateInterceptorHandler(), 200));
+  public void setAuthenticate(Set<SecurityInfo> authcSet) {
+    addSecurityHandler(new SecurityHandler(authcSet, new AuthenticateInterceptorHandler(), 200));
   }
 
   public void setCustomHandler() {
-    Set<AuthHandlerEntity> customHandler = securityRealm.addCustomHandler();
+    Set<SecurityHandler> customHandler = securityRealm.customSecurityHandler();
     if (CollUtil.isNotEmpty(customHandler)) {
-      for (AuthHandlerEntity authHandlerEntity : customHandler) {
-        addHandler(authHandlerEntity);
+      for (SecurityHandler securityHandler : customHandler) {
+        addSecurityHandler(securityHandler);
       }
     }
-    this.handlers.sort(Comparator.comparingInt(AuthHandlerEntity::getOrder));
+    this.handlers.sort(Comparator.comparingInt(SecurityHandler::getOrder));
   }
 
-  private void addHandler(AuthHandlerEntity authHandlerEntity) {
-    this.handlers.add(authHandlerEntity);
+  private void addSecurityHandler(SecurityHandler securityHandler) {
+    this.handlers.add(securityHandler);
   }
 
-  private static class HandlerHelper {
+
+  @Getter
+  @Setter
+  private static class HandlerInfo {
 
     private String[] auth;
     private Logical logical;
     private InterceptorHandler handler;
 
-    public HandlerHelper(InterceptorHandler handler) {
+    public HandlerInfo(InterceptorHandler handler) {
       this.handler = handler;
     }
 
-    public HandlerHelper(String[] auth, Logical logical, InterceptorHandler handler) {
+    public HandlerInfo(String[] auth, Logical logical, InterceptorHandler handler) {
       this.auth = auth;
       this.logical = logical;
-      this.handler = handler;
-    }
-
-    public String[] getAuth() {
-      return auth;
-    }
-
-    public void setAuth(String[] auth) {
-      this.auth = auth;
-    }
-
-    public Logical getLogical() {
-      return logical;
-    }
-
-    public void setLogical(Logical logical) {
-      this.logical = logical;
-    }
-
-    public InterceptorHandler getHandler() {
-      return handler;
-    }
-
-    public void setHandler(InterceptorHandler handler) {
       this.handler = handler;
     }
   }

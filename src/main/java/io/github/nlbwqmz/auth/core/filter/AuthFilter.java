@@ -1,6 +1,6 @@
 package io.github.nlbwqmz.auth.core.filter;
 
-import io.github.nlbwqmz.auth.common.SubjectManager;
+import io.github.nlbwqmz.auth.common.AuthThreadLocal;
 import io.github.nlbwqmz.auth.core.chain.AuthChain;
 import io.github.nlbwqmz.auth.core.chain.ChainManager;
 import io.github.nlbwqmz.auth.core.security.SecurityRealm;
@@ -36,14 +36,14 @@ public class AuthFilter implements Filter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     try {
-      SubjectManager.setRequest((HttpServletRequest) request);
-      SubjectManager.setResponse((HttpServletResponse) response);
+      AuthThreadLocal.setRequest((HttpServletRequest) request);
+      AuthThreadLocal.setResponse((HttpServletResponse) response);
       new ChainManager(authChains).doAuth();
-      chain.doFilter(SubjectManager.getRequest(), SubjectManager.getResponse());
+      chain.doFilter(AuthThreadLocal.getRequest(), AuthThreadLocal.getResponse());
     } catch (Throwable e) {
-      securityRealm.handleError(SubjectManager.getRequest(), SubjectManager.getResponse(), e);
+      securityRealm.handleError(AuthThreadLocal.getRequest(), AuthThreadLocal.getResponse(), e);
     } finally {
-      SubjectManager.removeAll();
+      AuthThreadLocal.removeAll();
     }
   }
 }

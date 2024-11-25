@@ -6,9 +6,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.RateLimiter;
-import io.github.nlbwqmz.auth.common.AuthInfo;
+import io.github.nlbwqmz.auth.common.AuthThreadLocal;
 import io.github.nlbwqmz.auth.common.FilterRange;
-import io.github.nlbwqmz.auth.common.SubjectManager;
+import io.github.nlbwqmz.auth.common.SecurityInfo;
 import io.github.nlbwqmz.auth.configuration.AuthAutoConfiguration;
 import io.github.nlbwqmz.auth.configuration.RateLimiterConfiguration;
 import io.github.nlbwqmz.auth.configuration.RateLimiterConfiguration.Strategy;
@@ -39,8 +39,8 @@ public class RateLimiterAuthChain implements AuthChain {
   private final RateLimiterCondition rateLimiterCondition;
   @Value("${server.servlet.context-path:}")
   private String contextPath;
-  private ImmutableSet<AuthInfo> ignored;
-  private ImmutableSet<AuthInfo> only;
+  private ImmutableSet<SecurityInfo> ignored;
+  private ImmutableSet<SecurityInfo> only;
 
   public RateLimiterAuthChain(AuthAutoConfiguration authAutoConfiguration,
       @Autowired(required = false) RateLimiterCondition rateLimiterCondition) {
@@ -62,16 +62,16 @@ public class RateLimiterAuthChain implements AuthChain {
 
   }
 
-  public void setRateLimiter(Set<AuthInfo> rateLimiterSet,
-      Set<AuthInfo> rateLimiterIgnoredSet) {
+  public void setRateLimiter(Set<SecurityInfo> rateLimiterSet,
+      Set<SecurityInfo> rateLimiterIgnoredSet) {
     Set<String> only = rateLimiterConfiguration.getOnly();
     Set<String> ignored = rateLimiterConfiguration.getIgnored();
     if (CollUtil.isNotEmpty(only)) {
-      rateLimiterSet.add(AuthInfo.builder()
+      rateLimiterSet.add(SecurityInfo.builder()
           .patterns(AuthCommonUtil.addUrlPrefix(only, contextPath)).build());
     }
     if (CollUtil.isNotEmpty(ignored)) {
-      rateLimiterIgnoredSet.add(AuthInfo.builder()
+      rateLimiterIgnoredSet.add(SecurityInfo.builder()
           .patterns(AuthCommonUtil.addUrlPrefix(ignored, contextPath)).build());
     }
     this.only = ImmutableSet.copyOf(rateLimiterSet);
@@ -90,7 +90,7 @@ public class RateLimiterAuthChain implements AuthChain {
           break;
         case CUSTOM:
           condition(rateLimiterCondition
-              .getCondition(SubjectManager.getRequest(), SubjectManager.getSubject()));
+              .getCondition(AuthThreadLocal.getRequest(), AuthThreadLocal.getSubject()));
           break;
         default:
           throw new RateLimiterException("rate limiter configuration strategy cannot match");
@@ -100,8 +100,8 @@ public class RateLimiterAuthChain implements AuthChain {
   }
 
   private boolean checkIsLimit() {
-    String uri = SubjectManager.getRequest().getRequestURI();
-    String method = SubjectManager.getRequest().getMethod();
+    String uri = AuthThreadLocal.getRequest().getRequestURI();
+    String method = AuthThreadLocal.getRequest().getMethod();
     FilterRange defaultFilterRange = rateLimiterConfiguration.getDefaultFilterRange();
     switch (defaultFilterRange) {
       case ALL:
@@ -135,7 +135,7 @@ public class RateLimiterAuthChain implements AuthChain {
    * 获取IP地址
    */
   private String getIp() {
-    HttpServletRequest request = SubjectManager.getRequest();
+    HttpServletRequest request = AuthThreadLocal.getRequest();
     String ipAddress = null;
     ipAddress = request.getHeader("x-forwarded-for");
     if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {

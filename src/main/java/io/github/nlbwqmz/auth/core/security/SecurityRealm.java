@@ -1,7 +1,7 @@
 package io.github.nlbwqmz.auth.core.security;
 
-import io.github.nlbwqmz.auth.common.AuthInfo;
-import io.github.nlbwqmz.auth.core.security.configuration.AuthHandlerEntity;
+import io.github.nlbwqmz.auth.common.SecurityInfo;
+import io.github.nlbwqmz.auth.core.security.configuration.SecurityHandler;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,23 +17,23 @@ public interface SecurityRealm {
    *
    * @return 权限集合
    */
-  Set<String> doAuthorization();
+  Set<String> userPermission(String subject);
 
   /**
-   * 添加 免登录 Patterns
+   * 添加 匿名 Patterns
    *
    * @return 免登录 Patterns 集合
    */
-  default Set<AuthInfo> addAnonPatterns() {
+  default Set<SecurityInfo> anonymous() {
     return null;
   }
 
   /**
-   * 添加 权限验证 Patterns
+   * 添加 授权 Patterns
    *
    * @return 权限验证 Patterns 集合
    */
-  default Set<AuthInfo> addAuthPatterns() {
+  default Set<SecurityInfo> authorize() {
     return null;
   }
 
@@ -42,7 +42,7 @@ public interface SecurityRealm {
    *
    * @return 自定义拦截器集合
    */
-  default Set<AuthHandlerEntity> addCustomHandler() {
+  default Set<SecurityHandler> customSecurityHandler() {
     return null;
   }
 

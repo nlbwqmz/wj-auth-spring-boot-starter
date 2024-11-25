@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
+ * 授权
+ *
  * @author 魏杰
  * @since 0.0.1
  */
@@ -16,15 +18,15 @@ public class AuthorizeInterceptorHandler implements InterceptorHandler {
   @Override
   public boolean authorize(HttpServletRequest request, HttpServletResponse response, String[] auth,
       Logical logical,
-      Set<String> userAuth) {
-    if (CollUtil.isEmpty(userAuth)) {
+      Set<String> userPermission) {
+    if (CollUtil.isEmpty(userPermission)) {
       return false;
     }
     switch (logical) {
       case OR:
-        return checkOr(userAuth, auth);
+        return checkOr(userPermission, auth);
       case AND:
-        return checkAnd(userAuth, auth);
+        return checkAnd(userPermission, auth);
       default:
         throw new AuthSecurityException("unknown exception");
     }

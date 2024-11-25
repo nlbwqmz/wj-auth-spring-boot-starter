@@ -1,5 +1,6 @@
 package io.github.nlbwqmz.auth.common;
 
+import java.util.Date;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -9,12 +10,13 @@ import javax.servlet.http.HttpServletResponse;
  * @author 魏杰
  * @since 0.0.1
  */
-public class SubjectManager {
+public class AuthThreadLocal {
 
   private static final ThreadLocal<HttpServletRequest> requestLocal = new ThreadLocal<>();
   private static final ThreadLocal<HttpServletResponse> responseLocal = new ThreadLocal<>();
   private static final ThreadLocal<String> subjectLocal = new ThreadLocal<>();
   private static final ThreadLocal<Long> expireLocal = new ThreadLocal<>();
+  private static final ThreadLocal<Date> expireDateLocal = new ThreadLocal<>();
 
   public static HttpServletRequest getRequest() {
     return requestLocal.get();
@@ -48,10 +50,19 @@ public class SubjectManager {
     expireLocal.set(expire);
   }
 
+  public static Date getExpireDate() {
+    return expireDateLocal.get();
+  }
+
+  public static void setExpireDate(Date expireDate) {
+    expireDateLocal.set(expireDate);
+  }
+
   public static void removeAll() {
     requestLocal.remove();
     responseLocal.remove();
     subjectLocal.remove();
     expireLocal.remove();
+    expireDateLocal.remove();
   }
 }

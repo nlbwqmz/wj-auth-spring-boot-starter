@@ -1,7 +1,7 @@
 package io.github.nlbwqmz.auth.configuration;
 
 import io.github.nlbwqmz.auth.configuration.RateLimiterConfiguration.Strategy;
-import io.github.nlbwqmz.auth.core.AuthRun;
+import io.github.nlbwqmz.auth.core.AuthInit;
 import io.github.nlbwqmz.auth.core.rateLimiter.RateLimiterCondition;
 import io.github.nlbwqmz.auth.exception.rate.RateLimiterException;
 import lombok.Getter;
@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Import;
 @Setter
 @Configuration
 @ConfigurationProperties(AuthAutoConfiguration.AUTH_PREFIX)
-@Import(AuthRun.class)
+@Import(AuthInit.class)
 public class AuthAutoConfiguration implements InitializingBean {
 
   public final static String AUTH_PREFIX = "wj-auth";
