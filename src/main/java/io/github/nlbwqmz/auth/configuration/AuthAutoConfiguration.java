@@ -75,11 +75,11 @@ public class AuthAutoConfiguration implements InitializingBean {
     if (rateLimiter.getEnable()) {
       if (rateLimiter.getThreshold() < 1) {
         throw new RateLimiterException(
-            "The minimum rate limit threshold is 1, and the default is 100");
+            "The minimum rate limit threshold is 1, and the default is 100.");
       }
       if (rateLimiter.getStrategy() == Strategy.CUSTOM && rateLimiterCondition == null) {
         throw new RateLimiterException(
-            "rate limiter strategy is CUSTOM,so bean RateLimiterCondition is required.");
+            "The rate limiter strategy is CUSTOM,so bean RateLimiterCondition is required.");
       }
     }
   }

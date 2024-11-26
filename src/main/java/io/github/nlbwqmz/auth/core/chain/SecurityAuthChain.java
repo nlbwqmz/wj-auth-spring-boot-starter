@@ -90,7 +90,7 @@ public class SecurityAuthChain implements AuthChain {
         if (handler.isAuthorize() && !handler.authorize(request, response, auth, handlerInfo.getLogical(),
             authRealm.userPermission(AuthThreadLocal.getSubject()))) {
           throw new PermissionNotFoundException(
-              String.format("permission [%s] required, logical is %s.", ArrayUtil.join(auth, ","),
+              String.format("Permission [%s] required, logical is %s.", ArrayUtil.join(auth, ","),
                   handlerInfo.getLogical().name()));
         }
       }
@@ -105,7 +105,7 @@ public class SecurityAuthChain implements AuthChain {
       Set<SecurityInfo> securityInfos = securityHandler.getSecurityInfoSet();
       for (SecurityInfo securityInfo : securityInfos) {
         if (MatchUtils.matcher(securityInfo, uri, method)) {
-          return new HandlerInfo(securityInfo.getAuth(), securityInfo.getLogical(),
+          return new HandlerInfo(securityInfo.getPermission(), securityInfo.getLogical(),
               securityHandler.getHandler());
         }
       }
@@ -122,7 +122,7 @@ public class SecurityAuthChain implements AuthChain {
     if (CollUtil.isNotEmpty(securityInfoSet)) {
       for (SecurityInfo securityInfo : securityInfoSet) {
         Set<String> patterns = securityInfo.getPatterns();
-        String[] auth = securityInfo.getAuth();
+        String[] auth = securityInfo.getPermission();
         if (AuthCommonUtil.isAllNotBlank(patterns) && AuthCommonUtil.isAllNotBlank(auth)) {
           securityInfo.setPatterns(AuthCommonUtil.addUrlPrefix(patterns, contextPath));
           authSet.add(securityInfo);
@@ -131,7 +131,7 @@ public class SecurityAuthChain implements AuthChain {
           clazz = clazz.substring(6, clazz.indexOf("$$"));
           throw new AuthInitException(
               String
-                  .format("at %s.addAuthPatterns, neither patterns nor auth can be blank.", clazz));
+                  .format("At %s.authorize, neither patterns nor auth can be blank.", clazz));
         }
       }
     }
@@ -156,7 +156,7 @@ public class SecurityAuthChain implements AuthChain {
             String clazz = authRealm.getClass().toString();
             clazz = clazz.substring(6, clazz.indexOf("$$"));
             throw new AuthInitException(
-                String.format("at %s.addAnonPatterns, patterns can't be blank.", clazz));
+                String.format("At %s.anonymous, patterns can't be blank.", clazz));
           }
         }
       }

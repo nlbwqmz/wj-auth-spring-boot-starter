@@ -77,7 +77,7 @@ public class XssAuthChain implements AuthChain {
         case NONE:
           return MatchUtils.matcher(xssOnly, request.getRequestURI(), request.getMethod());
         default:
-          throw new XssException("xss configuration defaultFilterRange cannot match");
+          throw new XssException("The xss configuration defaultFilterRange cannot match");
       }
     } else {
       return false;

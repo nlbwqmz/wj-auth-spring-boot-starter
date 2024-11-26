@@ -17,6 +17,7 @@ import io.github.nlbwqmz.auth.core.rateLimiter.RateLimiterCondition;
 import io.github.nlbwqmz.auth.exception.rate.RateLimiterException;
 import io.github.nlbwqmz.auth.utils.AuthCommonUtil;
 import io.github.nlbwqmz.auth.utils.MatchUtils;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +43,8 @@ public class RateLimiterAuthChain implements AuthChain {
   private String contextPath;
   private ImmutableSet<SecurityInfo> ignored;
   private ImmutableSet<SecurityInfo> only;
+
+  private final Duration timeout = Duration.ofMillis(100);
 
   public RateLimiterAuthChain(AuthAutoConfiguration authAutoConfiguration,
       @Autowired(required = false) RateLimiterCondition rateLimiterCondition) {
@@ -94,7 +97,7 @@ public class RateLimiterAuthChain implements AuthChain {
               .getCondition(AuthThreadLocal.getRequest(), AuthThreadLocal.getSubject()));
           break;
         default:
-          throw new RateLimiterException("rate limiter configuration strategy cannot match");
+          throw new RateLimiterException("The rate limiter configuration strategy cannot match.");
       }
     }
     chain.doAuth();
@@ -111,20 +114,20 @@ public class RateLimiterAuthChain implements AuthChain {
         return MatchUtils.matcher(only, uri, method);
       default:
         throw new RateLimiterException(
-            "rate limiter configuration defaultFilterRange cannot match");
+            "The rate limiter configuration defaultFilterRange cannot match.");
     }
   }
 
   private void normal() {
-    if (!rateLimiter.tryAcquire()) {
-      throw new RateLimiterException("busy service");
+    if (!rateLimiter.tryAcquire(timeout)) {
+      throw new RateLimiterException("Busy service.");
     }
   }
 
   private void condition(String condition) {
     try {
-      if (!cache.get(condition).tryAcquire()) {
-        throw new RateLimiterException("busy service");
+      if (!cache.get(condition).tryAcquire(timeout)) {
+        throw new RateLimiterException("Busy service.");
       }
     } catch (ExecutionException e) {
       throw new RateLimiterException(e.getMessage());

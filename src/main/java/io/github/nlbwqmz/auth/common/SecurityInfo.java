@@ -21,7 +21,7 @@ public class SecurityInfo {
 
   private Set<String> patterns;
   private Set<String> methods;
-  private String[] auth;
+  private String[] permission;
   private Logical logical;
 
 }

@@ -28,7 +28,7 @@ public class AuthorizeInterceptorHandler implements InterceptorHandler {
       case AND:
         return checkAnd(userPermission, shouldPermission);
       default:
-        throw new AuthSecurityException("unknown exception");
+        throw new AuthSecurityException("Unknown logical.");
     }
   }
 

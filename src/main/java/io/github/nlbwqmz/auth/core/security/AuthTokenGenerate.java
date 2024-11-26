@@ -1,6 +1,5 @@
 package io.github.nlbwqmz.auth.core.security;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
@@ -61,9 +60,14 @@ public class AuthTokenGenerate {
     AlgorithmEnum algorithm = tokenConfiguration.getAlgorithm();
     String algorithmName = algorithm.name();
     if (StrUtil.startWithIgnoreCase(algorithmName, "HS")) {
-      return JWTSignerUtil.createSigner(algorithmName, tokenKeyConfiguration.key().getBytes(StandardCharsets.UTF_8));
+      String key = tokenKeyConfiguration.key();
+      Assert.notBlank(key, () -> new CertificateException("HS algorithm must set key."));
+      return JWTSignerUtil.createSigner(algorithmName, key.getBytes(StandardCharsets.UTF_8));
     } else if (StrUtil.startWithIgnoreCase(algorithmName, "RS")) {
-      RSA rsa = SecureUtil.rsa(tokenKeyConfiguration.privateKey(), tokenKeyConfiguration.publicKey());
+      String privateKey = tokenKeyConfiguration.privateKey();
+      String publicKey = tokenKeyConfiguration.publicKey();
+      Assert.isTrue(StrUtil.isNotBlank(publicKey) && StrUtil.isNotBlank(privateKey), () -> new CertificateException("RS algorithm must set public key and private key."));
+      RSA rsa = SecureUtil.rsa(privateKey, publicKey);
       Key key = BooleanUtil.isTrue(isPrivate) ? rsa.getPrivateKey() : rsa.getPublicKey();
       return JWTSignerUtil.createSigner(algorithmName, key);
     }
@@ -126,15 +130,5 @@ public class AuthTokenGenerate {
     } catch (Exception e) {
       throw new CertificateExpiredException(e.getMessage());
     }
-  }
-
-  public static void main(String[] args) {
-    JWT jwt = JWT.create()
-        .setIssuer("nlbwqmz.github.io")
-        .setIssuedAt(new Date())
-        .setPayload("sub", "user_id_test")
-        .setExpiresAt(DateUtil.offsetSecond(new Date(), 60))
-        .setKey("nlbwqmz.github.io".getBytes(StandardCharsets.UTF_8));
-    System.out.printf(jwt.sign());
   }
 }

@@ -144,11 +144,11 @@ public class AuthInit implements ApplicationRunner {
               SecurityInfo.builder()
                   .patterns(patterns)
                   .methods(methods)
-                  .auth(permission.value())
+                  .permission(permission.value())
                   .logical(permission.logical()).build());
         } else {
           throw new AuthInitException(
-              String.format("at %s.%s, annotation Auth value can't be blank",
+              String.format("At %s.%s, annotation Auth value can't be blank.",
                   declaringClass.toString().substring(6), method.getName()));
         }
         return;
@@ -162,7 +162,7 @@ public class AuthInit implements ApplicationRunner {
         authorizeSet.add(SecurityInfo.builder()
             .patterns(patterns)
             .methods(methods)
-            .auth(declaredPermission.value())
+            .permission(declaredPermission.value())
             .logical(declaredPermission.logical()).build());
         return;
       } else if (declaredAnonymous != null) {
