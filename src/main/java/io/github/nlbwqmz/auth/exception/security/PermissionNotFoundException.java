@@ -8,8 +8,6 @@ package io.github.nlbwqmz.auth.exception.security;
  */
 public class PermissionNotFoundException extends AuthSecurityException {
 
-  private static final long serialVersionUID = -4669516593143531404L;
-
   public PermissionNotFoundException(String message) {
     super(message);
   }

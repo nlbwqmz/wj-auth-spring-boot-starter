@@ -1,6 +1,7 @@
 package io.github.nlbwqmz.auth.core.chain;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -80,7 +81,7 @@ public class RateLimiterAuthChain implements AuthChain {
 
   @Override
   public void doFilter(ChainManager chain) {
-    if (rateLimiterConfiguration.isEnabled() && checkIsLimit()) {
+    if (rateLimiterConfiguration.getEnable() && checkIsLimit()) {
       switch (rateLimiterConfiguration.getStrategy()) {
         case NORMAL:
           normal();
@@ -126,7 +127,6 @@ public class RateLimiterAuthChain implements AuthChain {
         throw new RateLimiterException("busy service");
       }
     } catch (ExecutionException e) {
-      e.printStackTrace();
       throw new RateLimiterException(e.getMessage());
     }
   }
@@ -136,22 +136,20 @@ public class RateLimiterAuthChain implements AuthChain {
    */
   private String getIp() {
     HttpServletRequest request = AuthThreadLocal.getRequest();
-    String ipAddress = null;
-    ipAddress = request.getHeader("x-forwarded-for");
-    if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
+    String ipAddress = request.getHeader("x-forwarded-for");
+    if (StrUtil.isBlank(ipAddress) || "unknown".equalsIgnoreCase(ipAddress)) {
+      ipAddress = request.getHeader("X-Real-IP");
+    }
+    if (StrUtil.isBlank(ipAddress) || "unknown".equalsIgnoreCase(ipAddress)) {
       ipAddress = request.getHeader("Proxy-Client-IP");
     }
-    if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
+    if (StrUtil.isBlank(ipAddress) || "unknown".equalsIgnoreCase(ipAddress)) {
       ipAddress = request.getHeader("WL-Proxy-Client-IP");
     }
-    if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
+    if (StrUtil.isBlank(ipAddress) || "unknown".equalsIgnoreCase(ipAddress)) {
       ipAddress = request.getRemoteAddr();
-      /*if (ipAddress.equals("127.0.0.1")) {
-        InetAddress inetAddress = InetAddress.getLocalHost();
-        ipAddress = inetAddress.getHostAddress();
-      }*/
     }
-    if (ipAddress != null && ipAddress.length() > 15) {
+    if (StrUtil.isBlank(ipAddress) && ipAddress.length() > 15) {
       if (ipAddress.indexOf(",") > 0) {
         ipAddress = ipAddress.substring(0, ipAddress.indexOf(","));
       }

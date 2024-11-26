@@ -15,9 +15,9 @@ public interface InterceptorHandler {
   /**
    * 授权
    */
-  boolean authorize(HttpServletRequest request, HttpServletResponse response, String[] auth,
+  boolean authorize(HttpServletRequest request, HttpServletResponse response, String[] shouldPermission,
       Logical logical,
-      @Nullable Set<String> userAuth);
+      @Nullable Set<String> userPermission);
 
   /**
    * 认证

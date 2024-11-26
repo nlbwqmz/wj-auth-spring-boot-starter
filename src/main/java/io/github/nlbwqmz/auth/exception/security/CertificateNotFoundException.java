@@ -8,8 +8,6 @@ package io.github.nlbwqmz.auth.exception.security;
  */
 public class CertificateNotFoundException extends AuthSecurityException {
 
-  private static final long serialVersionUID = -2681373326677425832L;
-
   public CertificateNotFoundException() {
     super("certificate not found");
   }

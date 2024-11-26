@@ -8,8 +8,6 @@ import io.github.nlbwqmz.auth.exception.AuthException;
  */
 public class AuthSecurityException extends AuthException {
 
-  private static final long serialVersionUID = -8668883699439972698L;
-
   public AuthSecurityException() {
   }
 

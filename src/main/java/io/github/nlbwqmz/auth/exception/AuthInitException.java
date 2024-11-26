@@ -6,8 +6,6 @@ package io.github.nlbwqmz.auth.exception;
  */
 public class AuthInitException extends AuthException {
 
-  private static final long serialVersionUID = 871220179478887624L;
-
   public AuthInitException() {
   }
 

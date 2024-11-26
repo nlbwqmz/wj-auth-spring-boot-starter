@@ -9,7 +9,7 @@
   </parent>
   <groupId>io.github.nlbwqmz</groupId>
   <artifactId>wj-auth-spring-boot-starter</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.1-test</version>
   <name>wj-auth-spring-boot-starter</name>
   <description>wj-auth-spring-boot-starter</description>
 

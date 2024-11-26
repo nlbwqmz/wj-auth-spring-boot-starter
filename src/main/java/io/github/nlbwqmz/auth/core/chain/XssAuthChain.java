@@ -54,9 +54,9 @@ public class XssAuthChain implements AuthChain {
   @Override
   public void doFilter(ChainManager chain) {
     HttpServletRequest request = AuthThreadLocal.getRequest();
-    if (isDoXss(request)) {
-      AuthThreadLocal.setRequest(new XssRequestWrapper(request, xssConfiguration.isQueryEnable(),
-          xssConfiguration.isBodyEnable()));
+    if ((xssConfiguration.getQueryEnable() || xssConfiguration.getBodyEnable()) && isDoXss(request)) {
+      AuthThreadLocal.setRequest(new XssRequestWrapper(request, xssConfiguration.getQueryEnable(),
+          xssConfiguration.getBodyEnable()));
     }
     chain.doAuth();
   }

@@ -1,5 +1,6 @@
 package io.github.nlbwqmz.auth.core.security;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.json.JSONObject;
 import cn.hutool.jwt.JWT;
@@ -9,6 +10,7 @@ import io.github.nlbwqmz.auth.common.AuthThreadLocal;
 import io.github.nlbwqmz.auth.configuration.AuthAutoConfiguration;
 import io.github.nlbwqmz.auth.configuration.TokenConfiguration;
 import io.github.nlbwqmz.auth.exception.security.CertificateException;
+import io.github.nlbwqmz.auth.exception.security.CertificateExpiredException;
 import io.github.nlbwqmz.auth.exception.security.CertificateNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -58,13 +60,31 @@ public class AuthTokenGenerate {
 
   public void verify(String token) {
     Assert.notBlank(token, CertificateNotFoundException::new);
+    JWTValidator validator;
     try {
-      JWTValidator.of(token)
-          .validateAlgorithm()
-          .validateAlgorithm(JWTSignerUtil.hs256(tokenConfiguration.getPassword().getBytes(StandardCharsets.UTF_8)))
-          .validateDate();
+      validator = JWTValidator.of(token);
     } catch (Exception e) {
       throw new CertificateException(e.getMessage());
     }
+    try {
+      validator.validateAlgorithm(JWTSignerUtil.hs256(tokenConfiguration.getPassword().getBytes(StandardCharsets.UTF_8)));
+    } catch (Exception e) {
+      throw new CertificateException(e.getMessage());
+    }
+    try {
+      validator.validateDate();
+    } catch (Exception e) {
+      throw new CertificateExpiredException(e.getMessage());
+    }
+  }
+
+  public static void main(String[] args) {
+    JWT jwt = JWT.create()
+        .setIssuer("nlbwqmz.github.io")
+        .setIssuedAt(new Date())
+        .setPayload("sub", "user_id_test")
+        .setExpiresAt(DateUtil.offsetSecond(new Date(), 60))
+        .setKey("nlbwqmz.github.io".getBytes(StandardCharsets.UTF_8));
+    System.out.printf(jwt.sign());
   }
 }

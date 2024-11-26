@@ -14,9 +14,9 @@ import javax.servlet.http.HttpServletResponse;
 public class AuthenticateInterceptorHandler implements InterceptorHandler {
 
   @Override
-  public boolean authorize(HttpServletRequest request, HttpServletResponse response, String[] auth,
+  public boolean authorize(HttpServletRequest request, HttpServletResponse response, String[] shouldPermission,
       Logical logical,
-      Set<String> userAuth) {
+      Set<String> userPermission) {
     return true;
   }
 

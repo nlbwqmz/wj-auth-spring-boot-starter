@@ -7,6 +7,5 @@ package io.github.nlbwqmz.auth.core.security.configuration;
  * @since 0.0.1
  */
 public enum AlgorithmEnum {
-  RSA,
   HMAC256
 }

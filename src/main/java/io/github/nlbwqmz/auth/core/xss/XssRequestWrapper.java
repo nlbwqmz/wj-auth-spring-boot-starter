@@ -1,15 +1,12 @@
 package io.github.nlbwqmz.auth.core.xss;
 
-import com.google.common.base.Strings;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.util.StrUtil;
 import com.google.common.html.HtmlEscapers;
-import io.github.nlbwqmz.auth.exception.xss.XssException;
+import io.github.nlbwqmz.auth.common.AuthServletInputStream;
 import io.github.nlbwqmz.auth.utils.JacksonUtils;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -32,7 +29,7 @@ public class XssRequestWrapper extends HttpServletRequestWrapper {
   @Override
   public String getParameter(String name) {
     String value = super.getParameter(name);
-    if (queryEnable && !Strings.isNullOrEmpty(value)) {
+    if (queryEnable && StrUtil.isNotBlank(value)) {
       value = HtmlEscapers.htmlEscaper().escape(value);
     }
     return value;
@@ -44,12 +41,10 @@ public class XssRequestWrapper extends HttpServletRequestWrapper {
     if (queryEnable) {
       if (parameterValues == null) {
         return null;
-
-
       }
       for (int i = 0; i < parameterValues.length; i++) {
         String value = parameterValues[i];
-        if (!Strings.isNullOrEmpty(value)) {
+        if (StrUtil.isNotBlank(value)) {
           parameterValues[i] = HtmlEscapers.htmlEscaper().escape(value);
         }
       }
@@ -60,61 +55,16 @@ public class XssRequestWrapper extends HttpServletRequestWrapper {
   @Override
   public ServletInputStream getInputStream() throws IOException {
     ServletInputStream servletInputStream = super.getInputStream();
-    if (bodyEnable) {
-      final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
-          doXss(servletInputStream).getBytes());
-      return createServletInputStream(byteArrayInputStream);
+    if (bodyEnable && servletInputStream.available() > 0) {
+      return new AuthServletInputStream(doXss(servletInputStream).getBytes());
     } else {
       return servletInputStream;
     }
   }
 
   public String doXss(ServletInputStream servletInputStream) {
-    StringBuilder sb = new StringBuilder();
-    try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(servletInputStream, StandardCharsets.UTF_8))) {
-      String line = "";
-      while ((line = reader.readLine()) != null) {
-        System.out.println(line);
-        sb.append(line);
-      }
-    } catch (IOException e) {
-      throw new XssException();
-    } finally {
-      if (servletInputStream != null) {
-        try {
-          servletInputStream.close();
-        } catch (IOException e) {
-          throw new XssException();
-        }
-      }
-    }
-    return JacksonUtils.jsonStringDoXss(sb.toString());
+    String read = IoUtil.read(servletInputStream, StandardCharsets.UTF_8);
+    return JacksonUtils.jsonStringDoXss(read);
   }
-
-  private ServletInputStream createServletInputStream(ByteArrayInputStream byteArrayInputStream) {
-    return new ServletInputStream() {
-      @Override
-      public int read() throws IOException {
-        return byteArrayInputStream.read();
-      }
-
-      @Override
-      public boolean isFinished() {
-        return false;
-      }
-
-      @Override
-      public boolean isReady() {
-        return false;
-      }
-
-      @Override
-      public void setReadListener(ReadListener listener) {
-
-      }
-    };
-  }
-
 
 }

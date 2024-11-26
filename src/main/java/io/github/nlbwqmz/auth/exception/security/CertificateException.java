@@ -6,8 +6,6 @@ package io.github.nlbwqmz.auth.exception.security;
  */
 public class CertificateException extends AuthSecurityException {
 
-  private static final long serialVersionUID = 4122793159618202802L;
-
   public CertificateException(String msg) {
     super(msg);
   }

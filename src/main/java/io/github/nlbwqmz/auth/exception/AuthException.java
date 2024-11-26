@@ -6,8 +6,6 @@ package io.github.nlbwqmz.auth.exception;
  */
 public class AuthException extends RuntimeException {
 
-  private static final long serialVersionUID = 4988644127541663322L;
-
   public AuthException() {
     super();
   }

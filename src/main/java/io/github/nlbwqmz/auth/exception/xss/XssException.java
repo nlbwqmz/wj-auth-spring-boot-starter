@@ -8,8 +8,6 @@ import io.github.nlbwqmz.auth.exception.AuthException;
  */
 public class XssException extends AuthException {
 
-  private static final long serialVersionUID = -1636012677889012370L;
-
   public XssException() {
   }
 

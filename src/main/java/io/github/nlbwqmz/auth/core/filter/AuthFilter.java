@@ -1,9 +1,9 @@
 package io.github.nlbwqmz.auth.core.filter;
 
 import io.github.nlbwqmz.auth.common.AuthThreadLocal;
+import io.github.nlbwqmz.auth.configuration.AuthRealm;
 import io.github.nlbwqmz.auth.core.chain.AuthChain;
 import io.github.nlbwqmz.auth.core.chain.ChainManager;
-import io.github.nlbwqmz.auth.core.security.SecurityRealm;
 import java.io.IOException;
 import java.util.List;
 import javax.servlet.Filter;
@@ -29,19 +29,23 @@ import org.springframework.core.annotation.Order;
 public class AuthFilter implements Filter {
 
   private final List<AuthChain> authChains;
-  private final SecurityRealm securityRealm;
+  private final AuthRealm authRealm;
 
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
+    if (!(request instanceof HttpServletRequest)) {
+      chain.doFilter(request, response);
+      return;
+    }
     try {
       AuthThreadLocal.setRequest((HttpServletRequest) request);
       AuthThreadLocal.setResponse((HttpServletResponse) response);
       new ChainManager(authChains).doAuth();
       chain.doFilter(AuthThreadLocal.getRequest(), AuthThreadLocal.getResponse());
     } catch (Throwable e) {
-      securityRealm.handleError(AuthThreadLocal.getRequest(), AuthThreadLocal.getResponse(), e);
+      authRealm.handleError(AuthThreadLocal.getRequest(), AuthThreadLocal.getResponse(), e);
     } finally {
       AuthThreadLocal.removeAll();
     }

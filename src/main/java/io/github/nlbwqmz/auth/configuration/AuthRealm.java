@@ -1,4 +1,4 @@
-package io.github.nlbwqmz.auth.core.security;
+package io.github.nlbwqmz.auth.configuration;
 
 import io.github.nlbwqmz.auth.common.SecurityInfo;
 import io.github.nlbwqmz.auth.core.security.configuration.SecurityHandler;
@@ -10,14 +10,16 @@ import javax.servlet.http.HttpServletResponse;
  * @author 魏杰
  * @since 0.0.1
  */
-public interface SecurityRealm {
+public interface AuthRealm {
 
   /**
    * 用户授权
    *
    * @return 权限集合
    */
-  Set<String> userPermission(String subject);
+  default Set<String> userPermission(String subject) {
+    return null;
+  }
 
   /**
    * 添加 匿名 Patterns

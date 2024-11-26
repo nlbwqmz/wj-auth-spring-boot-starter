@@ -2,22 +2,26 @@ package io.github.nlbwqmz.auth.configuration;
 
 import io.github.nlbwqmz.auth.common.FilterRange;
 import java.util.Set;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author 魏杰
  * @since 0.0.1
  */
+@Getter
+@Setter
 public class XssConfiguration {
 
   /**
    * 开启query过滤
    */
-  private boolean queryEnable = false;
+  private Boolean queryEnable = false;
 
   /**
    * 开启body过滤
    */
-  private boolean bodyEnable = false;
+  private Boolean bodyEnable = false;
   /**
    * 过滤范围
    */
@@ -32,43 +36,4 @@ public class XssConfiguration {
    */
   private Set<String> only;
 
-  public boolean isQueryEnable() {
-    return queryEnable;
-  }
-
-  public void setQueryEnable(boolean queryEnable) {
-    this.queryEnable = queryEnable;
-  }
-
-  public boolean isBodyEnable() {
-    return bodyEnable;
-  }
-
-  public void setBodyEnable(boolean bodyEnable) {
-    this.bodyEnable = bodyEnable;
-  }
-
-  public Set<String> getIgnored() {
-    return ignored;
-  }
-
-  public void setIgnored(Set<String> ignored) {
-    this.ignored = ignored;
-  }
-
-  public Set<String> getOnly() {
-    return only;
-  }
-
-  public void setOnly(Set<String> only) {
-    this.only = only;
-  }
-
-  public FilterRange getFilterRange() {
-    return filterRange;
-  }
-
-  public void setFilterRange(FilterRange filterRange) {
-    this.filterRange = filterRange;
-  }
 }

@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 public class AuthorizeInterceptorHandler implements InterceptorHandler {
 
   @Override
-  public boolean authorize(HttpServletRequest request, HttpServletResponse response, String[] auth,
+  public boolean authorize(HttpServletRequest request, HttpServletResponse response, String[] shouldPermission,
       Logical logical,
       Set<String> userPermission) {
     if (CollUtil.isEmpty(userPermission)) {
@@ -24,9 +24,9 @@ public class AuthorizeInterceptorHandler implements InterceptorHandler {
     }
     switch (logical) {
       case OR:
-        return checkOr(userPermission, auth);
+        return checkOr(userPermission, shouldPermission);
       case AND:
-        return checkAnd(userPermission, auth);
+        return checkAnd(userPermission, shouldPermission);
       default:
         throw new AuthSecurityException("unknown exception");
     }

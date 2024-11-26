@@ -1,12 +1,12 @@
 package io.github.nlbwqmz.auth.utils;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.base.Strings;
 import com.google.common.html.HtmlEscapers;
 import io.github.nlbwqmz.auth.exception.xss.XssException;
 import java.io.IOException;
@@ -29,7 +29,7 @@ public class JacksonUtils {
       @Override
       public void serialize(String value, JsonGenerator jsonGenerator,
           SerializerProvider serializerProvider) throws IOException {
-        if (!Strings.isNullOrEmpty(value)) {
+        if (StrUtil.isNotBlank(value)) {
           jsonGenerator.writeString(HtmlEscapers.htmlEscaper().escape(value));
         } else {
           jsonGenerator.writeString(value);

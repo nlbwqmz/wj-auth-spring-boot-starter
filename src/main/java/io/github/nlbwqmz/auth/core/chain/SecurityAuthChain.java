@@ -4,13 +4,14 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.BooleanUtil;
 import io.github.nlbwqmz.auth.common.AuthThreadLocal;
 import io.github.nlbwqmz.auth.common.SecurityInfo;
 import io.github.nlbwqmz.auth.configuration.AuthAutoConfiguration;
+import io.github.nlbwqmz.auth.configuration.AuthRealm;
 import io.github.nlbwqmz.auth.configuration.SecurityConfiguration;
 import io.github.nlbwqmz.auth.core.AuthManager;
 import io.github.nlbwqmz.auth.core.security.AuthTokenGenerate;
-import io.github.nlbwqmz.auth.core.security.SecurityRealm;
 import io.github.nlbwqmz.auth.core.security.configuration.Logical;
 import io.github.nlbwqmz.auth.core.security.configuration.SecurityHandler;
 import io.github.nlbwqmz.auth.core.security.handler.AnonymizeInterceptorHandler;
@@ -45,51 +46,53 @@ public class SecurityAuthChain implements AuthChain {
 
   private final SecurityConfiguration securityConfiguration;
   private final AuthTokenGenerate authTokenGenerate;
-  private final SecurityRealm securityRealm;
+  private final AuthRealm authRealm;
   private final List<SecurityHandler> handlers = new ArrayList<>();
   @Value("${server.servlet.context-path:}")
   private String contextPath;
 
   public SecurityAuthChain(AuthAutoConfiguration authAutoConfiguration,
       AuthTokenGenerate authTokenGenerate,
-      SecurityRealm securityRealm) {
+      AuthRealm authRealm) {
     this.securityConfiguration = authAutoConfiguration.getSecurity();
     this.authTokenGenerate = authTokenGenerate;
-    this.securityRealm = securityRealm;
+    this.authRealm = authRealm;
   }
 
   @Override
   public void doFilter(ChainManager chain) {
-    HttpServletRequest request = AuthThreadLocal.getRequest();
-    HttpServletResponse response = AuthThreadLocal.getResponse();
-    HandlerInfo handlerInfo = getAuthHandler(request);
-    if (handlerInfo != null) {
-      InterceptorHandler handler = handlerInfo.getHandler();
-      String[] auth = handlerInfo.getAuth();
-      String authenticate = handler.authenticate(request, response, securityConfiguration.getHeader());
-      // 验证token
-      if (handler.isVerifyToken() || handler.isRefreshToken()) {
-        authTokenGenerate.verify(authenticate);
-        authTokenGenerate.decode(authenticate);
-      }
-      // 刷新token
-      if (handler.isRefreshToken() && securityConfiguration.getToken().getRefresh()) {
-        Date expireDate = AuthThreadLocal.getExpireDate();
-        if (Objects.nonNull(expireDate)) {
-          Long residualDuration = securityConfiguration.getToken().getResidualDuration();
-          if (residualDuration <= 0
-              || DateUtil.between(new Date(), expireDate, DateUnit.MS, false) < residualDuration) {
-            String subject = AuthThreadLocal.getSubject();
-            long expire = AuthThreadLocal.getExpire();
-            AuthManager.login(subject, expire);
+    if (BooleanUtil.isTrue(securityConfiguration.getEnable())) {
+      HttpServletRequest request = AuthThreadLocal.getRequest();
+      HttpServletResponse response = AuthThreadLocal.getResponse();
+      HandlerInfo handlerInfo = getAuthHandler(request);
+      if (handlerInfo != null) {
+        InterceptorHandler handler = handlerInfo.getHandler();
+        String[] auth = handlerInfo.getAuth();
+        String authenticate = handler.authenticate(request, response, securityConfiguration.getHeader());
+        // 验证token
+        if (handler.isVerifyToken() || handler.isRefreshToken()) {
+          authTokenGenerate.verify(authenticate);
+          authTokenGenerate.decode(authenticate);
+        }
+        // 刷新token
+        if (handler.isRefreshToken() && securityConfiguration.getToken().getRefresh()) {
+          Date expireDate = AuthThreadLocal.getExpireDate();
+          if (Objects.nonNull(expireDate)) {
+            Long residualDuration = securityConfiguration.getToken().getResidualDuration();
+            if (residualDuration <= 0
+                || DateUtil.between(new Date(), expireDate, DateUnit.MS, false) < residualDuration) {
+              String subject = AuthThreadLocal.getSubject();
+              long expire = AuthThreadLocal.getExpire();
+              AuthManager.login(subject, expire);
+            }
           }
         }
-      }
-      if (handler.isAuthorize() && !handler.authorize(request, response, auth, handlerInfo.getLogical(),
-          securityRealm.userPermission(AuthThreadLocal.getSubject()))) {
-        throw new PermissionNotFoundException(
-            String.format("%s permission required, logical is %s.", ArrayUtil.join(auth, ","),
-                handlerInfo.getLogical().name()));
+        if (handler.isAuthorize() && !handler.authorize(request, response, auth, handlerInfo.getLogical(),
+            authRealm.userPermission(AuthThreadLocal.getSubject()))) {
+          throw new PermissionNotFoundException(
+              String.format("permission [%s] required, logical is %s.", ArrayUtil.join(auth, ","),
+                  handlerInfo.getLogical().name()));
+        }
       }
     }
     chain.doAuth();
@@ -107,7 +110,7 @@ public class SecurityAuthChain implements AuthChain {
         }
       }
     }
-    if (securityConfiguration.isStrict()) {
+    if (securityConfiguration.getStrict()) {
       return new HandlerInfo(new AuthenticateInterceptorHandler());
     } else {
       return null;
@@ -115,7 +118,7 @@ public class SecurityAuthChain implements AuthChain {
   }
 
   public void setAuthorize(Set<SecurityInfo> authSet) {
-    Set<SecurityInfo> securityInfoSet = securityRealm.authorize();
+    Set<SecurityInfo> securityInfoSet = authRealm.authorize();
     if (CollUtil.isNotEmpty(securityInfoSet)) {
       for (SecurityInfo securityInfo : securityInfoSet) {
         Set<String> patterns = securityInfo.getPatterns();
@@ -124,7 +127,7 @@ public class SecurityAuthChain implements AuthChain {
           securityInfo.setPatterns(AuthCommonUtil.addUrlPrefix(patterns, contextPath));
           authSet.add(securityInfo);
         } else {
-          String clazz = securityRealm.getClass().toString();
+          String clazz = authRealm.getClass().toString();
           clazz = clazz.substring(6, clazz.indexOf("$$"));
           throw new AuthInitException(
               String
@@ -141,7 +144,7 @@ public class SecurityAuthChain implements AuthChain {
           .patterns(AuthCommonUtil.addUrlPrefix(securityConfiguration.getAnon(), contextPath))
           .build());
     }
-    Set<SecurityInfo> anonSecurityInfoSet = securityRealm.anonymous();
+    Set<SecurityInfo> anonSecurityInfoSet = authRealm.anonymous();
     if (CollUtil.isNotEmpty(anonSecurityInfoSet)) {
       for (SecurityInfo securityInfo : anonSecurityInfoSet) {
         if (securityInfo != null) {
@@ -150,7 +153,7 @@ public class SecurityAuthChain implements AuthChain {
             securityInfo.setPatterns(AuthCommonUtil.addUrlPrefix(patterns, contextPath));
             anonSet.add(securityInfo);
           } else {
-            String clazz = securityRealm.getClass().toString();
+            String clazz = authRealm.getClass().toString();
             clazz = clazz.substring(6, clazz.indexOf("$$"));
             throw new AuthInitException(
                 String.format("at %s.addAnonPatterns, patterns can't be blank.", clazz));
@@ -166,7 +169,7 @@ public class SecurityAuthChain implements AuthChain {
   }
 
   public void setCustomHandler() {
-    Set<SecurityHandler> customHandler = securityRealm.customSecurityHandler();
+    Set<SecurityHandler> customHandler = authRealm.customSecurityHandler();
     if (CollUtil.isNotEmpty(customHandler)) {
       for (SecurityHandler securityHandler : customHandler) {
         addSecurityHandler(securityHandler);

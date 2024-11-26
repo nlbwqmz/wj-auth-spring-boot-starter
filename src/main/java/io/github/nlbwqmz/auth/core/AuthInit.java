@@ -16,7 +16,6 @@ import io.github.nlbwqmz.auth.configuration.XssConfiguration;
 import io.github.nlbwqmz.auth.core.chain.RateLimiterAuthChain;
 import io.github.nlbwqmz.auth.core.chain.SecurityAuthChain;
 import io.github.nlbwqmz.auth.core.chain.XssAuthChain;
-import io.github.nlbwqmz.auth.core.security.SecurityRealm;
 import io.github.nlbwqmz.auth.exception.AuthInitException;
 import io.github.nlbwqmz.auth.utils.AuthCommonUtil;
 import java.lang.annotation.Annotation;
@@ -28,7 +27,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -42,7 +40,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  * @author 魏杰
  * @since 0.0.1
  */
-@ConditionalOnBean(SecurityRealm.class)
 @ServletComponentScan("io.github.nlbwqmz.auth")
 @ComponentScan("io.github.nlbwqmz.auth")
 public class AuthInit implements ApplicationRunner {
@@ -109,7 +106,7 @@ public class AuthInit implements ApplicationRunner {
 
   private void initRateLimiter(Method method, Set<String> patterns, Set<String> methods) {
     RateLimiterConfiguration rateLimiterConfiguration = authAutoConfiguration.getRateLimiter();
-    if (rateLimiterConfiguration.isEnabled()) {
+    if (rateLimiterConfiguration.getEnable()) {
       FilterRange defaultFilterRange = rateLimiterConfiguration.getDefaultFilterRange();
       if (defaultFilterRange == FilterRange.ALL && hasAnnotation(method, RateLimitIgnored.class)) {
         rateLimiterIgnoredSet
@@ -123,7 +120,7 @@ public class AuthInit implements ApplicationRunner {
 
   private void initXss(Method method, Set<String> patterns, Set<String> methods) {
     XssConfiguration xssConfiguration = authAutoConfiguration.getXss();
-    if (xssConfiguration.isQueryEnable() || xssConfiguration.isBodyEnable()) {
+    if (xssConfiguration.getQueryEnable() || xssConfiguration.getBodyEnable()) {
       FilterRange defaultFilterRange = xssConfiguration.getFilterRange();
       if (defaultFilterRange == FilterRange.ALL && hasAnnotation(method, XssIgnored.class)) {
         xssIgnoredSet
@@ -136,7 +133,7 @@ public class AuthInit implements ApplicationRunner {
 
   private void initSecurity(Method method, Set<String> patterns, Set<String> methods) {
     SecurityConfiguration securityConfiguration = authAutoConfiguration.getSecurity();
-    if (securityConfiguration.isEnableAnnotation()) {
+    if (securityConfiguration.getEnableAnnotation()) {
       Permission permission = method.getAnnotation(Permission.class);
       Anonymous anonymous = method.getAnnotation(Anonymous.class);
       Class<?> declaringClass = method.getDeclaringClass();

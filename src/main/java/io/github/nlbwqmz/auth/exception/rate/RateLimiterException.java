@@ -8,8 +8,6 @@ import io.github.nlbwqmz.auth.exception.AuthException;
  */
 public class RateLimiterException extends AuthException {
 
-  private static final long serialVersionUID = -747170999759162570L;
-
   public RateLimiterException() {
   }
 

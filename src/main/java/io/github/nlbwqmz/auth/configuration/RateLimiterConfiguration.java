@@ -18,11 +18,11 @@ public class RateLimiterConfiguration {
   /**
    * 开启
    */
-  private boolean enabled = false;
+  private Boolean enable = false;
   /**
-   * 阈值
+   * 阈值(QPS)
    */
-  private double threshold = 100;
+  private Double threshold = 100D;
 
   /**
    * 忽略

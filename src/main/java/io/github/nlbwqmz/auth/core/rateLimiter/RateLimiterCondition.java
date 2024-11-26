@@ -12,7 +12,7 @@ public interface RateLimiterCondition {
   /**
    * 获取限流条件
    *
-   * @param request
+   * @param request 请求信息
    * @param subject token载体
    * @return 限流条件
    */

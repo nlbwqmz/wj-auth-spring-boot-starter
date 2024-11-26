@@ -6,8 +6,6 @@ package io.github.nlbwqmz.auth.exception;
  */
 public class TokenFactoryInitException extends AuthException {
 
-  private static final long serialVersionUID = -5679819620579358386L;
-
   public TokenFactoryInitException() {
     super("AuthTokenGenerate init error");
   }

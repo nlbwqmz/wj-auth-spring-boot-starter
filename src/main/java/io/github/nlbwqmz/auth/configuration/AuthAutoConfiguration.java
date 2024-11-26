@@ -6,8 +6,6 @@ import io.github.nlbwqmz.auth.core.rateLimiter.RateLimiterCondition;
 import io.github.nlbwqmz.auth.exception.rate.RateLimiterException;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -29,8 +27,6 @@ import org.springframework.context.annotation.Import;
 public class AuthAutoConfiguration implements InitializingBean {
 
   public final static String AUTH_PREFIX = "wj-auth";
-  public final static String ERROR_ATTRIBUTE = "authError";
-  private static Logger log = LoggerFactory.getLogger(AuthAutoConfiguration.class);
 
   /**
    * 授权认证配置
@@ -67,10 +63,10 @@ public class AuthAutoConfiguration implements InitializingBean {
   }
 
   private void checkRateLimiterConfiguration() {
-    if (rateLimiter.isEnabled()) {
+    if (rateLimiter.getEnable()) {
       if (rateLimiter.getThreshold() < 1) {
         throw new RateLimiterException(
-            "The minimum rate limit threshold is 1, and the default is 20");
+            "The minimum rate limit threshold is 1, and the default is 100");
       }
       if (rateLimiter.getStrategy() == Strategy.CUSTOM && rateLimiterCondition == null) {
         throw new RateLimiterException(
