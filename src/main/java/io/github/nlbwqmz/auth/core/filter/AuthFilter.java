@@ -1,5 +1,6 @@
 package io.github.nlbwqmz.auth.core.filter;
 
+import cn.hutool.core.util.StrUtil;
 import io.github.nlbwqmz.auth.common.AuthThreadLocal;
 import io.github.nlbwqmz.auth.configuration.AuthRealm;
 import io.github.nlbwqmz.auth.core.chain.AuthChain;
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 
 /**
  * 过滤器
@@ -39,8 +41,13 @@ public class AuthFilter implements Filter {
       chain.doFilter(request, response);
       return;
     }
+    HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+    if (StrUtil.equalsIgnoreCase(HttpMethod.OPTIONS.name(), httpServletRequest.getMethod())) {
+      chain.doFilter(request, response);
+      return;
+    }
     try {
-      AuthThreadLocal.setRequest((HttpServletRequest) request);
+      AuthThreadLocal.setRequest(httpServletRequest);
       AuthThreadLocal.setResponse((HttpServletResponse) response);
       new ChainManager(authChains).doAuth();
       chain.doFilter(AuthThreadLocal.getRequest(), AuthThreadLocal.getResponse());

@@ -24,10 +24,10 @@ public class SecurityConfiguration {
   /**
    * 免登录接口
    */
-  private Set<String> anon;
+  private Set<String> anonymize;
   /**
    * 严格模式
-   * true:所有请求都会被过滤，被springboot扫描到的请求按照设置过滤，未被扫描到的执行AuthcInterceptorHandler
+   * true:所有请求都会被过滤，被springboot扫描到的请求按照设置过滤，未被扫描到的执行 AuthenticateInterceptorHandler
    * false:只有被springboot扫描到的请求会被过滤
    */
   private Boolean strict = true;

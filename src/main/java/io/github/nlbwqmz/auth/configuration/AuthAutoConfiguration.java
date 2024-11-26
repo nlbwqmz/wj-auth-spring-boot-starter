@@ -1,8 +1,13 @@
 package io.github.nlbwqmz.auth.configuration;
 
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import io.github.nlbwqmz.auth.configuration.RateLimiterConfiguration.Strategy;
 import io.github.nlbwqmz.auth.core.AuthInit;
 import io.github.nlbwqmz.auth.core.rateLimiter.RateLimiterCondition;
+import io.github.nlbwqmz.auth.core.security.configuration.AlgorithmEnum;
+import io.github.nlbwqmz.auth.core.security.configuration.TokenKeyConfiguration;
+import io.github.nlbwqmz.auth.exception.TokenFactoryInitException;
 import io.github.nlbwqmz.auth.exception.rate.RateLimiterException;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,14 +57,18 @@ public class AuthAutoConfiguration implements InitializingBean {
   private RateLimiterConfiguration rateLimiter = new RateLimiterConfiguration();
 
   private final RateLimiterCondition rateLimiterCondition;
+  private final TokenKeyConfiguration tokenKeyConfiguration;
 
-  public AuthAutoConfiguration(@Autowired(required = false) RateLimiterCondition rateLimiterCondition) {
+  public AuthAutoConfiguration(@Autowired(required = false) RateLimiterCondition rateLimiterCondition,
+      @Autowired(required = false) TokenKeyConfiguration tokenKeyConfiguration) {
     this.rateLimiterCondition = rateLimiterCondition;
+    this.tokenKeyConfiguration = tokenKeyConfiguration;
   }
 
   @Override
   public void afterPropertiesSet() throws Exception {
     checkRateLimiterConfiguration();
+    checkSecurityConfiguration();
   }
 
   private void checkRateLimiterConfiguration() {
@@ -71,6 +80,24 @@ public class AuthAutoConfiguration implements InitializingBean {
       if (rateLimiter.getStrategy() == Strategy.CUSTOM && rateLimiterCondition == null) {
         throw new RateLimiterException(
             "rate limiter strategy is CUSTOM,so bean RateLimiterCondition is required.");
+      }
+    }
+  }
+
+  private void checkSecurityConfiguration() {
+    if (security.getEnable()) {
+      AlgorithmEnum algorithm = security.getToken().getAlgorithm();
+      Assert.notNull(algorithm, () -> new TokenFactoryInitException("Algorithm must be set."));
+      Assert.notNull(tokenKeyConfiguration, () -> new TokenFactoryInitException("TokenKeyConfiguration must be set."));
+      String algorithmName = algorithm.name();
+      if (StrUtil.startWithIgnoreCase(algorithmName, "HS")) {
+        Assert.notBlank(tokenKeyConfiguration.key(), () -> new TokenFactoryInitException("HS algorithm must set key."));
+      } else if (StrUtil.startWithIgnoreCase(algorithmName, "RS")) {
+        Assert.isTrue(
+            StrUtil.isNotBlank(tokenKeyConfiguration.publicKey()) && StrUtil.isNotBlank(tokenKeyConfiguration.privateKey()),
+            () -> new TokenFactoryInitException("RS algorithm must set public key and private key."));
+      } else {
+        throw new TokenFactoryInitException("Unsupported algorithms.");
       }
     }
   }

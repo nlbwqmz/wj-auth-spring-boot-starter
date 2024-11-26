@@ -3,7 +3,6 @@ package io.github.nlbwqmz.auth.utils;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
-import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -17,11 +16,10 @@ public class AuthCommonUtil {
   public static boolean isAllNotBlank(String[] array) {
     if (ArrayUtil.isEmpty(array)) {
       return false;
-    } else {
-      for (String item : array) {
-        if (StrUtil.isBlank(item)) {
-          return false;
-        }
+    }
+    for (String item : array) {
+      if (StrUtil.isBlank(item)) {
+        return false;
       }
     }
     return true;
@@ -33,11 +31,10 @@ public class AuthCommonUtil {
   public static boolean isAllNotBlank(Collection<String> collection) {
     if (CollUtil.isEmpty(collection)) {
       return false;
-    } else {
-      for (String item : collection) {
-        if (StrUtil.isBlank(item)) {
-          return false;
-        }
+    }
+    for (String item : collection) {
+      if (StrUtil.isBlank(item)) {
+        return false;
       }
     }
     return true;
@@ -45,13 +42,15 @@ public class AuthCommonUtil {
 
   public static Set<String> addUrlPrefix(Set<String> set, String prefix) {
     prefix = Optional.ofNullable(prefix).orElse("");
-    set = Optional.ofNullable(set).orElse(Sets.newHashSet());
+    if (CollUtil.isEmpty(set)) {
+      return CollUtil.newHashSet();
+    }
     Set<String> result = new HashSet<>();
     for (String item : set) {
-      if (item.startsWith("/")) {
+      if (item.startsWith(StrUtil.SLASH)) {
         result.add(prefix + item);
       } else {
-        result.add(prefix + "/" + item);
+        result.add(prefix + StrUtil.SLASH + item);
       }
     }
     return result;

@@ -65,7 +65,7 @@ public class SecurityAuthChain implements AuthChain {
       HttpServletRequest request = AuthThreadLocal.getRequest();
       HttpServletResponse response = AuthThreadLocal.getResponse();
       HandlerInfo handlerInfo = getAuthHandler(request);
-      if (handlerInfo != null) {
+      if (Objects.nonNull(handlerInfo)) {
         InterceptorHandler handler = handlerInfo.getHandler();
         String[] auth = handlerInfo.getAuth();
         String authenticate = handler.authenticate(request, response, securityConfiguration.getHeader());
@@ -139,9 +139,9 @@ public class SecurityAuthChain implements AuthChain {
   }
 
   public void setAnonymous(Set<SecurityInfo> anonSet) {
-    if (CollUtil.isNotEmpty(securityConfiguration.getAnon())) {
+    if (CollUtil.isNotEmpty(securityConfiguration.getAnonymize())) {
       anonSet.add(SecurityInfo.builder()
-          .patterns(AuthCommonUtil.addUrlPrefix(securityConfiguration.getAnon(), contextPath))
+          .patterns(AuthCommonUtil.addUrlPrefix(securityConfiguration.getAnonymize(), contextPath))
           .build());
     }
     Set<SecurityInfo> anonSecurityInfoSet = authRealm.anonymous();

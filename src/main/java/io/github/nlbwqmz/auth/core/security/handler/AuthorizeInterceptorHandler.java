@@ -38,18 +38,18 @@ public class AuthorizeInterceptorHandler implements InterceptorHandler {
     return request.getHeader(header);
   }
 
-  private boolean checkOr(Set<String> userAuth, String[] auth) {
-    for (String item : auth) {
-      if (userAuth.contains(item)) {
+  private boolean checkOr(Set<String> userPermission, String[] shouldPermission) {
+    for (String item : shouldPermission) {
+      if (userPermission.contains(item)) {
         return true;
       }
     }
     return false;
   }
 
-  private boolean checkAnd(Set<String> userAuth, String[] auth) {
-    for (String item : auth) {
-      if (!userAuth.contains(item)) {
+  private boolean checkAnd(Set<String> userPermission, String[] shouldPermission) {
+    for (String item : shouldPermission) {
+      if (!userPermission.contains(item)) {
         return false;
       }
     }
