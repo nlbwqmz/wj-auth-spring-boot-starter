@@ -10,7 +10,7 @@
   <groupId>io.github.nlbwqmz</groupId>
   <artifactId>wj-auth-spring-boot-starter</artifactId>
   <version>0.0.2</version>
-  <name>wj-auth-spring-boot-starter</name>
+  <name>${project.groupId}:${project.artifactId}</name>
   <description>认证授权框架，额外支持CORS、XSS、限流。</description>
   <url>https://github.com/nlbwqmz/wj-auth-spring-boot-starter</url>
 
@@ -76,19 +76,6 @@
     </dependency>
   </dependencies>
 
-
-  <!-- 发布地址 -->
-  <distributionManagement>
-    <repository>
-      <id>oss</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <snapshotRepository>
-      <id>oss</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-    </snapshotRepository>
-  </distributionManagement>
-
   <build>
     <plugins>
       <plugin>
@@ -144,8 +131,6 @@
         <artifactId>maven-gpg-plugin</artifactId>
         <version>3.2.7</version>
         <configuration>
-          <!-- 3.此处executable填写你下载的路径
-              keyname填写你根据gpg工具生成的秘钥id-->
           <executable>D:\install\GnuPG\bin\gpg.exe</executable>
           <keyname>203E948F3CB70FFAB033349601800E747B817DB0</keyname>
         </configuration>
