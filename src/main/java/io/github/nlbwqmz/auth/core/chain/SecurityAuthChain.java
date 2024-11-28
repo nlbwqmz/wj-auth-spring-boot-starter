@@ -73,6 +73,13 @@ public class SecurityAuthChain implements AuthChain {
         if (handler.isVerifyToken() || handler.isRefreshToken()) {
           authTokenGenerate.verify(authenticate);
           authTokenGenerate.decode(authenticate);
+        } else {
+          // 匿名接口也尝试解析token信息，但是会忽略异常情况
+          try {
+            authTokenGenerate.verify(authenticate);
+            authTokenGenerate.decode(authenticate);
+          } catch (Exception ignored) {
+          }
         }
         // 刷新token
         if (handler.isRefreshToken() && securityConfiguration.getToken().getRefresh()) {

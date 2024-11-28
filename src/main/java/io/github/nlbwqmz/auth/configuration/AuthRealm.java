@@ -15,7 +15,7 @@ public interface AuthRealm {
   /**
    * 用户授权
    *
-   * @return 权限集合
+   * @return 用户权限集合
    */
   default Set<String> userPermission(String subject) {
     return null;
@@ -24,7 +24,7 @@ public interface AuthRealm {
   /**
    * 添加 匿名 Patterns
    *
-   * @return 免登录 Patterns 集合
+   * @return 匿名 Patterns 集合
    */
   default Set<SecurityInfo> anonymous() {
     return null;
@@ -48,5 +48,12 @@ public interface AuthRealm {
     return null;
   }
 
+  /**
+   * 异常处理
+   *
+   * @param request   请求信息
+   * @param response  响应信息
+   * @param throwable 异常信息
+   */
   void handleError(HttpServletRequest request, HttpServletResponse response, Throwable throwable);
 }

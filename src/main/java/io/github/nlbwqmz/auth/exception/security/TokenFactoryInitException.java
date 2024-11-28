@@ -1,4 +1,6 @@
-package io.github.nlbwqmz.auth.exception;
+package io.github.nlbwqmz.auth.exception.security;
+
+import io.github.nlbwqmz.auth.exception.AuthException;
 
 /**
  * @author 魏杰
