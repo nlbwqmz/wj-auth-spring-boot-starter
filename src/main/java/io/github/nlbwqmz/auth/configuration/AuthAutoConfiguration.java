@@ -1,6 +1,7 @@
 package io.github.nlbwqmz.auth.configuration;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import io.github.nlbwqmz.auth.configuration.RateLimiterConfiguration.Strategy;
 import io.github.nlbwqmz.auth.core.AuthInit;
@@ -9,6 +10,7 @@ import io.github.nlbwqmz.auth.core.security.configuration.AlgorithmEnum;
 import io.github.nlbwqmz.auth.core.security.configuration.TokenKeyConfiguration;
 import io.github.nlbwqmz.auth.exception.rate.RateLimiterException;
 import io.github.nlbwqmz.auth.exception.security.TokenFactoryInitException;
+import io.github.nlbwqmz.auth.utils.BannerUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.InitializingBean;
@@ -32,6 +34,11 @@ import org.springframework.context.annotation.Import;
 public class AuthAutoConfiguration implements InitializingBean {
 
   public final static String AUTH_PREFIX = "wj-auth";
+
+  /**
+   * banner
+   */
+  private Boolean banner = true;
 
   /**
    * 授权认证配置
@@ -67,6 +74,9 @@ public class AuthAutoConfiguration implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() throws Exception {
+    if (BooleanUtil.isTrue(banner)) {
+      BannerUtil.printBanner();
+    }
     checkRateLimiterConfiguration();
     checkSecurityConfiguration();
   }

@@ -138,11 +138,11 @@ public class SecurityAuthChain implements AuthChain {
           clazz = clazz.substring(6, clazz.indexOf("$$"));
           throw new AuthInitException(
               String
-                  .format("At %s.authorize, neither patterns nor auth can be blank.", clazz));
+                  .format("At %s.authorize, neither patterns nor permission can be blank.", clazz));
         }
       }
     }
-    addSecurityHandler(new SecurityHandler(authSet, new AuthorizeInterceptorHandler(), 0));
+    addSecurityHandler(new SecurityHandler(authSet, new AuthorizeInterceptorHandler(), 200));
   }
 
   public void setAnonymous(Set<SecurityInfo> anonSet) {
@@ -168,11 +168,11 @@ public class SecurityAuthChain implements AuthChain {
         }
       }
     }
-    addSecurityHandler(new SecurityHandler(anonSet, new AnonymizeInterceptorHandler(), 100));
+    addSecurityHandler(new SecurityHandler(anonSet, new AnonymizeInterceptorHandler(), 0));
   }
 
   public void setAuthenticate(Set<SecurityInfo> authcSet) {
-    addSecurityHandler(new SecurityHandler(authcSet, new AuthenticateInterceptorHandler(), 200));
+    addSecurityHandler(new SecurityHandler(authcSet, new AuthenticateInterceptorHandler(), 100));
   }
 
   public void setCustomHandler() {

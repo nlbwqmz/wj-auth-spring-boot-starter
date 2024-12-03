@@ -5,16 +5,18 @@
 ## 一、使用
 
 ```xml
+
 <dependency>
   <groupId>io.github.nlbwqmz</groupId>
   <artifactId>wj-auth-spring-boot-starter</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
 </dependency>
 ```
 
 将@EnableAuth注解加载启动类上。
 
 ```java
+
 @EnableAuth
 @SpringBootApplication
 public class AuthApplication {
@@ -245,13 +247,19 @@ public interface RateLimiterCondition {
 String subject = "userId";
 
 // 签发永不过期的token
-AuthManager.login(subject);
+AuthManager.
+
+login(subject);
 
 // 签发60分钟的token
-AuthManager.login(subject, 60 * 60 * 1000);
+AuthManager.
+
+login(subject, 60*60*1000);
 
 // 签发60分钟的token
-AuthManager.login(subject, 60, TimeUnit.MINUTES);
+AuthManager.
+
+login(subject, 60,TimeUnit.MINUTES);
 ```
 
 - 获取用户信息
