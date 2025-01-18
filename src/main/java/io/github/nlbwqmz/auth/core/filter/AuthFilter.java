@@ -26,7 +26,7 @@ import org.springframework.http.HttpMethod;
  * @since 0.0.1
  */
 @Order(0)
-@WebFilter(filterName = "authFilter", urlPatterns = "/*")
+@WebFilter(filterName = "authFilter", urlPatterns = "/*", asyncSupported = true)
 @RequiredArgsConstructor
 public class AuthFilter implements Filter {
 

@@ -10,7 +10,7 @@ public class BannerUtil {
           + "\\  /\\  /\\__/ /      | | | | |_| | | | | | | |\n"
           + " \\/  \\/\\____/       \\_| |_/\\___/  \\_/ \\_| |_/\n"
           + "                                             \n"
-          + ":: wj-auth ::                        (v0.0.3)";
+          + ":: wj-auth ::                        (v0.0.4)";
 
 
   public static void printBanner() {
